@@ -23,7 +23,10 @@ EnterEq byte "Enter Equation To Solve: ",0
 Equation byte 35 dup(?)
 Co byte 35 dup(?)
 Power byte 35 dup(?)
+Sign byte 35 dup(?)
+Val byte 0
 PowerFlag byte 0
+offsetOfEq dword 0
 ;#########################Q1 DATA##############################	
 																					
 ;#########################Q2 DATA##############################	
@@ -130,35 +133,45 @@ call writestring
 mov ecx,35
 mov edx,offset Equation
 call readstring
+mov offsetOfEq,edx
 mov ecx,eax
 mov edx,0
-mov ebx,0
+mov ebx,0 ;total Calc
 mov esi, offset Co
 mov edi,offset Power
+mov ebp,offset Sign
 mov PowerFlag,0 ;flag of power
 looop:
 
     movzx eax, Equation[edx]   ; Get the current character
-    
 	cmp eax,45 ; value is -
 	je skip
 	cmp eax,43 ; value is +
 	je skip
-	cmp eax,43 ; value is X
+	cmp eax,88 ; value is X
 	je assignCof
 	cmp eax,94 ; value is ^
 	je ChanePower
+	cmp ecx,LENGTHOF Equation
+	je AddFirstPlus
+	jmp Action
 
-     
-    sub eax, 48             ; Convert from ASCII to decimal 
-    imul ebx, 10            ; Multiply total by 10
-    add ebx, eax            ; Add current digit to total
+ AddFirstPlus:
+	mov eax,43
+	mov [ebp],eax
+	inc ebp
+
+Action:
+	call CalcAppend
+	jmp continue
 
 ChanePower:
 	mov PowerFlag,1 ;add power flag
 	jmp continue
 
 skip:
+	mov [ebp],eax
+	inc ebp
 	cmp PowerFlag,1 ;check power flag
 	je assignPower
 	jmp continue
@@ -167,7 +180,11 @@ assignCof:
     mov [esi],ebx
 	mov ebx,0
 	inc esi
-	jmp continue
+	movzx eax, Equation[edx+1]
+	cmp eax,94 ; value is ^
+	je continue
+	mov ebx,1
+	jmp assignPower
 
 assignPower:
 	mov [edi],ebx
@@ -180,9 +197,41 @@ continue:
 	inc edx   
 loop looop
 
+
+;###########################Der##################################
+
+mov esi, offset Co
+mov edi,offset Power
+mov ecx,LENGTHOF Co
+loop2:
+	mov eax,[esi]
+	mov ebx,[edi]
+	imul eax, ebx
+	dec ebx
+	mov [esi],eax
+	mov [edi],ebx
+	inc esi
+	inc edi
+loop loop2
+;###########################Print##################################
+mov esi, offset Co
+mov edi,offset Power
+mov ecx,LENGTHOF Co
+loop3:
+
+loop loop3
+
 RET
 Q1 ENDP
 
+;###########################CalcAppend##################################
+CalcAppend PROC
+	movzx eax, Equation[edx]
+    sub eax, 48             ; Convert from ASCII to decimal 
+    imul ebx, 10            ; Multiply total by 10
+    add ebx, eax            ; Add current digit to total
+		RET
+CalcAppend ENDP
 
 ;----------------------------------------------------------
 ;DO NOT CHANGE THE FUNCTION NAME
