@@ -21,7 +21,9 @@ INCLUDE Irvine32FCIS.inc ;DO NOT CHANGE THIS LINE
 ;#########################Q1 DATA##############################	
 EnterEq byte "Enter Equation To Solve: ",0
 Equation byte 35 dup(?)
-temp byte '15'
+Co byte 35 dup(?)
+Power byte 35 dup(?)
+PowerFlag byte 0
 ;#########################Q1 DATA##############################	
 																					
 ;#########################Q2 DATA##############################	
@@ -131,37 +133,52 @@ call readstring
 mov ecx,eax
 mov edx,0
 mov ebx,0
+mov esi, offset Co
+mov edi,offset Power
+mov PowerFlag,0 ;flag of power
 looop:
 
-    movzx eax, Equation [edx]   ; Get the current character
+    movzx eax, Equation[edx]   ; Get the current character
     
-    cmp eax, 48             ; Anything less than 0 is invalid
-    jl skip
-    
-    cmp eax, 57             ; Anything greater than 9 is invalid
-    jg skip
+	cmp eax,45 ; value is -
+	je skip
+	cmp eax,43 ; value is +
+	je skip
+	cmp eax,43 ; value is X
+	je assignCof
+	cmp eax,94 ; value is ^
+	je ChanePower
+
      
     sub eax, 48             ; Convert from ASCII to decimal 
     imul ebx, 10            ; Multiply total by 10
     add ebx, eax            ; Add current digit to total
-    
+
+ChanePower:
+	mov PowerFlag,1 ;add power flag
+	jmp continue
+
 skip:
-inc edx   
+	cmp PowerFlag,1 ;check power flag
+	je assignPower
+	jmp continue
 
+assignCof:
+    mov [esi],ebx
+	mov ebx,0
+	inc esi
+	jmp continue
+
+assignPower:
+	mov [edi],ebx
+	mov ebx,0
+	mov PowerFlag,0 ;remove flag
+	inc edi
+	jmp continue
+
+continue:
+	inc edx   
 loop looop
-
- 
-mov edx,offset Equation
-call writestring
-call crlf
-
-mov edx,offset Equation
-mov al,[edx]
-add al,[edx+1]
-mov bl,2
-mul bl
-call writechar
-call crlf
 
 RET
 Q1 ENDP
