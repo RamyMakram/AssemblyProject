@@ -20,14 +20,16 @@ INCLUDE Irvine32FCIS.inc ;DO NOT CHANGE THIS LINE
 .data																				
 ;#########################Q1 DATA##############################	
 EnterEq byte "Enter Equation To Solve: ",0
-Equation byte 35 dup(?)
-Co byte 35 dup(?)
-Power byte 35 dup(?)
-Sign byte 35 dup(?)
+Equation byte 35 dup(-1)
+Co dword 35 dup(-1)
+Power dword 35 dup(-1)
+Sign dword 35 dup(?)
 Val byte 0
 PowerFlag byte 0
 LenghtOfEnterd dword 0
 temp word 0
+ReadedX dword 0
+NumOfTerms dword 0
 offsetOfEq dword 0
 ;#########################Q1 DATA##############################	
 																					
@@ -129,15 +131,22 @@ MAIN ENDP											  ;#
 ; Question one procedure here
 ;----------------------------------------------------------
 Q1 PROC
-
+mov esi,0
+mov ecx,35
+loopp:
+	mov Co[esi],-1
+	mov Power[esi],-1
+	mov Sign[esi],-1
+	add esi,4
+loop loopp
+mov NumOfTerms,0
 mov edx,offset EnterEq
 call writestring
 mov ecx,35
 mov edx,offset Equation
 call readstring
-mov LenghtOfEnterd,eax
-mov offsetOfEq,edx
 inc eax
+mov LenghtOfEnterd,eax
 mov ecx, eax
 mov edx,0
 mov ebx,0 ;total Calc
@@ -157,15 +166,15 @@ looop:
 	jmp Action
 
  AddFirstPlus:
-	mov eax,43
-	mov [ebp],eax
-	inc ebp
+	call AddFirstPlus
 
 Action:
 	cmp eax,88 ; value is X
 	je assignCof
 	cmp eax,94 ; value is ^
 	je ChanePower
+	cmp ecx,1 ;last elem
+	je AssignLastElem
 	call CalcAppend
 	jmp continue
 
@@ -173,29 +182,32 @@ ChanePower:
 	mov PowerFlag,1 ;add power flag
 	jmp continue
 
+AssignLastElem:
+	cmp PowerFlag,1 ;check power flag
+	je assignPower
+	jmp assignCof
+
 skip:
 	mov [ebp],eax
-	inc ebp
+	add ebp,4
 	cmp PowerFlag,1 ;check power flag
 	je assignPower
 	jmp continue
 
 assignCof:
-    mov [esi],ebx
-	mov ebx,0
-	inc esi
-	movzx eax, Equation[edx+1]
+    call AssignCoffient
 	cmp eax,94 ; value is ^
 	je continue
-	mov ebx,1
-	jmp assignPower
 
 assignPower:
-	mov [edi],ebx
-	mov ebx,0
-	mov PowerFlag,0 ;remove flag
-	inc edi
+	cmp ReadedX,0
+	je NoX
+	mov ebx,1
+	call AssignPowerProc
 	jmp continue
+NoX:
+	mov ebx,-1
+	call AssignPowerProc
 
 continue:
 	inc edx   
@@ -203,49 +215,62 @@ loop looop
 
 
 ;###########################Der##################################
-
-mov esi, 0
-mov edi,0
-mov ecx,LENGTHOF Co
+mov esi, offset Co
+mov edi,offset Power
+mov ecx,NumOfTerms
 loop2:
-	mov al,Co[esi]
-	mov bl,Power[edi]
-	mul bl
-	dec bl
-movzx eax,ax
-mov temp,ax
-	inc esi
-	inc edi
+	mov eax,[esi]
+	mov ebx,[edi]
+	cmp ebx,-1
+	je LastElementIsNum
+	imul eax,ebx
+	mov [esi],eax
+	dec ebx
+	mov [edi],ebx
+	jmp Contloop2
+
+LastElementIsNum:
+	mov eax,0
+	mov [esi],eax
+
+Contloop2:
+	add esi,4
+	add edi,4
 loop loop2
 ;###########################Print##################################
 mov esi, offset Co
 mov edi,offset Power
 mov ebx,offset Sign
-mov ecx,LENGTHOF Sign
+mov ecx,NumOfTerms
 loop3:
 
-	cmp ecx,LENGTHOF Sign
+	cmp ecx,NumOfTerms
 	je PrintFirstSign
-	jmp Actions2
+	jmp PrintSign
 
 PrintFirstSign:
-	mov edx,45
-	cmp [ebx],edx
+	mov edx,45 
+	cmp [ebx],edx ;cmp mince
 	je PrintMince
-	inc ebx
+	add ebx,4
 	jmp Actions2
 
 PrintMince:
 	mov al,'-'
 	call writechar
-	inc ebx
+	jmp Actions2
+
+PrintSign:
+	mov al,[ebx]
+	call writechar
+	add ebx,4
 
 Actions2:
 	mov eax,[esi]
 	call writedec
 	mov eax,[edi]
 	cmp eax,0
-	je cont ;print only Co
+	jle cont ;print only Co
 	cmp eax,1
 	je PrintX ;print only X
 	jmp PrintAll
@@ -253,9 +278,6 @@ Actions2:
 PrintX:
 	mov al,'X'
 	call writechar
-	mov al,[ebx]
-	call writechar
-	inc ebx
 	jmp cont
 
 PrintAll:
@@ -265,13 +287,10 @@ PrintAll:
 	call writechar
 	mov eax,[edi]
 	call writedec
-	mov al,[ebx]
-	call writechar
-	inc ebx
 
 cont:
-	inc esi
-	inc edi
+	add esi,4
+	add edi,4
 
 loop loop3
 
@@ -288,6 +307,31 @@ CalcAppend PROC
 		RET
 CalcAppend ENDP
 
+AssignCoffient PROC
+	mov ReadedX,1
+	inc NumOfTerms
+	mov [esi],ebx
+	mov ebx,0
+	add esi,4
+	movzx eax, Equation[edx+1]
+		RET
+AssignCoffient ENDP
+
+AssignPowerProc PROC
+	mov ReadedX,0
+	mov [edi],ebx
+	mov ebx,0
+	mov PowerFlag,0 ;remove flag
+	add edi,4
+		RET
+AssignPowerProc ENDP
+
+AddFirstPlus PROC
+	mov eax,43
+	mov [ebp],eax
+	add ebp,4
+RET
+AddFirstPlus ENDP
 ;----------------------------------------------------------
 ;DO NOT CHANGE THE FUNCTION NAME
 ;

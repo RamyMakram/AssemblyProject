@@ -1,22 +1,5 @@
 ﻿  
   INFO: No tasks running with the specified criteria.
   Assembling main.asm...
-  Project.vcxproj -> D:\AssemblyProject\Debug\Project.exe
-  ######################################################################
-  ##                       AUTOGRADER STARTED!!                       ##
-  ######################################################################
-  
-  Q1 result: Failure
-  Q2 result: Failure
-  Q3 result: Failure
-  Q4 result: Failure
-  Q5 result: Failure
-  Q6 result: Failure
-  Q7 result: Failure
-  
-  TOTAL GRADE: 0 OUT OF 7
-  
-  ######################################################################
-  ##               AUTOGRADING FINISHED SUCCESSFULLY!!                ##
-  ######################################################################
-  
+main.asm(214): error A2075: jump destination too far : by 11 byte(s)
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\BuildCustomizations\masm.targets(70,5): error MSB3721: The command "ml.exe /c /nologo /Zi /Fo"Debug\main.obj" /I "E:\Teaching\Assembly 07\IrvineExamples" /W3 /errorReport:prompt  /Tamain.asm" exited with code 1.
