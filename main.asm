@@ -26,6 +26,8 @@ Power byte 35 dup(?)
 Sign byte 35 dup(?)
 Val byte 0
 PowerFlag byte 0
+LenghtOfEnterd dword 0
+temp word 0
 offsetOfEq dword 0
 ;#########################Q1 DATA##############################	
 																					
@@ -133,8 +135,10 @@ call writestring
 mov ecx,35
 mov edx,offset Equation
 call readstring
+mov LenghtOfEnterd,eax
 mov offsetOfEq,edx
-mov ecx,eax
+inc eax
+mov ecx, eax
 mov edx,0
 mov ebx,0 ;total Calc
 mov esi, offset Co
@@ -148,11 +152,7 @@ looop:
 	je skip
 	cmp eax,43 ; value is +
 	je skip
-	cmp eax,88 ; value is X
-	je assignCof
-	cmp eax,94 ; value is ^
-	je ChanePower
-	cmp ecx,LENGTHOF Equation
+	cmp ecx,LenghtOfEnterd
 	je AddFirstPlus
 	jmp Action
 
@@ -162,6 +162,10 @@ looop:
 	inc ebp
 
 Action:
+	cmp eax,88 ; value is X
+	je assignCof
+	cmp eax,94 ; value is ^
+	je ChanePower
 	call CalcAppend
 	jmp continue
 
@@ -200,27 +204,78 @@ loop looop
 
 ;###########################Der##################################
 
-mov esi, offset Co
-mov edi,offset Power
+mov esi, 0
+mov edi,0
 mov ecx,LENGTHOF Co
 loop2:
-	mov eax,[esi]
-	mov ebx,[edi]
-	imul eax, ebx
-	dec ebx
-	mov [esi],eax
-	mov [edi],ebx
+	mov al,Co[esi]
+	mov bl,Power[edi]
+	mul bl
+	dec bl
+movzx eax,ax
+mov temp,ax
 	inc esi
 	inc edi
 loop loop2
 ;###########################Print##################################
 mov esi, offset Co
 mov edi,offset Power
-mov ecx,LENGTHOF Co
+mov ebx,offset Sign
+mov ecx,LENGTHOF Sign
 loop3:
+
+	cmp ecx,LENGTHOF Sign
+	je PrintFirstSign
+	jmp Actions2
+
+PrintFirstSign:
+	mov edx,45
+	cmp [ebx],edx
+	je PrintMince
+	inc ebx
+	jmp Actions2
+
+PrintMince:
+	mov al,'-'
+	call writechar
+	inc ebx
+
+Actions2:
+	mov eax,[esi]
+	call writedec
+	mov eax,[edi]
+	cmp eax,0
+	je cont ;print only Co
+	cmp eax,1
+	je PrintX ;print only X
+	jmp PrintAll
+
+PrintX:
+	mov al,'X'
+	call writechar
+	mov al,[ebx]
+	call writechar
+	inc ebx
+	jmp cont
+
+PrintAll:
+	mov al,'X'
+	call writechar
+	mov al,'^'
+	call writechar
+	mov eax,[edi]
+	call writedec
+	mov al,[ebx]
+	call writechar
+	inc ebx
+
+cont:
+	inc esi
+	inc edi
 
 loop loop3
 
+call crlf
 RET
 Q1 ENDP
 
