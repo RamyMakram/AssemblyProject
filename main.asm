@@ -9,7 +9,7 @@ Sign dword 35 dup(?)
 Val byte 0
 PowerFlag byte 0
 LenghtOfEnterd dword 0
-temp word 0
+temp dword 0
 ReadedX dword 0
 NumOfTerms dword 0
 offsetOfEq dword 0
@@ -55,6 +55,7 @@ Start:
 		call AddFirstPlusProc
 
 	Action:
+		movzx eax, Equation[edx]
 		cmp eax,88 ; value is X
 		je ChangeReadedX
 		cmp eax,94 ; value is ^
@@ -80,6 +81,7 @@ Start:
 	skip:
 		mov [ebp],eax
 		add ebp,4
+		call CheckFreeVar
 		cmp PowerFlag,1 ;check power flag
 		je assignPower
 		jmp continue
@@ -235,8 +237,31 @@ AddFirstPlusProc PROC
 	mov eax,43
 	mov [ebp],eax
 	add ebp,4
+	movzx eax, Equation[edx]
+	CMP EAX,88 ;THERE X
+	JE FirstIsX
+	jmp Cont
+	mov ebx,0
+FirstIsX:
+	mov ebx,1
+	jmp Cont
+Cont:
+	movzx eax, Equation[edx]
 RET
 AddFirstPlusProc ENDP
 
-											  ;#
+CheckFreeVar PROC
+	movzx eax, Equation[edx+1]
+	CMP EAX,88 ;THERE X
+	JE FirstIsX
+	jmp Cont
+	mov ebx,0
+FirstIsX:
+	mov ebx,1
+	jmp Cont
+Cont:
+	movzx eax, Equation[edx]
+RET
+CheckFreeVar ENDP	
+										  ;#
 END MAIN
