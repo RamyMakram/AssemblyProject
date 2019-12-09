@@ -1,6 +1,25 @@
 INCLUDE Irvine32FCIS.inc ;DO NOT CHANGE THIS LINE
-						
-.data																				
+
+;###################################################################################;#
+.data																				;#
+																					;#
+	prmpt byte "	Please enter question number 1, 2, 3, or enter 0 to exit:", 0		;#
+	wrongChoice byte "Please enter a valid question number!", 0		                ;#
+	intro byte "							     Welcome to Drivative solver                      ",0              
+	instructions byte "	Before get started follow the following instructions :",0    
+	X_inst byte "					- Make variable Capital Example : X ",0                           
+	pow_inst byte "					- write ( ^ ) to explain power",0                                
+	int_inst byte "					- Coofficients & powers should be integers only",0               
+	Pynomial byte "					1- Pynomial Equation",0                           
+	trigo byte "					2- Trigyomitric Equation",0                               
+	fract byte "					3- Fractional Equation",0                
+																					;#
+	tmpstr byte 5 dup(?), 0															;#
+;###################################################################################;#
+																																										
+.data	
+																
+;#########################Q1 DATA##############################	
 EnterEq byte "Enter Equation To Solve: ",0
 Equation byte 35 dup(-1)
 Co dword 35 dup(-1)
@@ -13,24 +32,121 @@ temp dword 0
 ReadedX dword 0
 NumOfTerms dword 0
 offsetOfEq dword 0
+;#########################Q1 DATA##############################	
+																					
+;#########################Q2 DATA##############################	
+
+;#########################Q2 DATA##############################		
+
+;#########################Q3 DATA##############################	
+bast byte 35 dup(-1)
+makam byte 35 dup(-1)
+;#########################Q3 DATA##############################		
 													
+														
+														
 .code													
-MAIN PROC											  ;#
-Start:
-	mov esi,0
-	mov ecx,35
-	loopp:
-		mov Co[esi],-1
-		mov Power[esi],-1
-		mov Sign[esi],-1
-		add esi,4
-	loop loopp
+														
+;#######################################################
+MAIN PROC									  ;#
+mov edx,offset intro								  ;#
+		call writestring						      ;#
+		call crlf									  ;#
+		call crlf									  ;#
+		call crlf									  ;#
+		mov edx,offset instructions					  ;#
+		call writestring							  ;#
+		call crlf									  ;#
+		call crlf									  ;#
+		mov edx,offset X_inst						  ;#
+		call writestring							  ;#
+		call crlf									  ;#
+		mov edx,offset pow_inst						  ;#
+		call writestring							  ;#
+		call crlf									  ;#
+		mov edx,offset int_inst						  ;#
+		call writestring							  ;#
+		call crlf									  ;#
+		call crlf									  ;#
+		call crlf									  ;#
+		mov edx,offset 	Pynomial					  ;#
+		call writestring							  ;#
+		call crlf									  ;#
+		mov edx,offset trigo						  ;#
+		call writestring							  ;#
+		call crlf									  ;#
+		mov edx,offset fract						  ;#
+		call writestring							  ;#
+		call crlf									  ;#
+		call crlf									  ;#
+		call crlf
+	PROGLOOP:
+		mov esi,0
+		mov ecx,35
+		loopp:
+			mov Co[esi],-1
+			mov Power[esi],-1
+			mov Sign[esi],-1
+			add esi,4
+		loop loopp												  ;#
+		call crlf									  ;#
+		MOV EDX, OFFSET PRMPT						  ;#
+		CALL WRITESTRING							  ;#
+		CALL CRLF									  ;#
+		CALL READINT								  ;#
+		CMP EAX, 0									  ;#
+		JE FIN										  ;#
+													  ;#
+		CMP EAX, 1									  ;#
+		JNE _Q2										  ;#
+		mov edx,offset EnterEq
+		call writestring
+		mov ecx,35
+		mov edx,offset Equation
+		call readstring
+		call Q1		
+		JMP CONT								  ;#
+													  ;#
+		_Q2:										  ;#
+		CMP EAX, 2									  ;#
+		JNE _Q3									      ;#
+		mov edx,offset EnterEq
+		call writestring
+		CALL Q2										  ;#
+		JMP CONT									  ;#
+													  ;#
+		_Q3:										  ;#
+		CMP EAX, 3									  ;#	
+		mov edx,offset EnterEq
+		call writestring							  ;#
+		CALL Q3										  ;#
+		JMP CONT									  ;#
+													  ;#
+													  ;#
+		WRONG:										  ;#
+		MOV EDX, OFFSET wrongChoice					  ;#
+		CALL WRITESTRING							  ;#
+		CALL CRLF									  ;#
+													  ;#
+		CONT:										  ;#
+		JMP PROGLOOP								  ;#
+													  ;#
+		FIN:										  ;#
+													  ;#
+	EXIT											  ;#
+MAIN ENDP											  ;#
+;#######################################################
+
+;
+;----------------------------------------------------------
+;----------------------------------------------------------
+Q1 PROC
+
+
+
+
+
 	mov NumOfTerms,0
-	mov edx,offset EnterEq
-	call writestring
-	mov ecx,35
-	mov edx,offset Equation
-	call readstring
 	inc eax
 	mov LenghtOfEnterd,eax
 	mov ecx, eax
@@ -189,10 +305,6 @@ Start:
 
 	loop loop3
 
-	call crlf
-	jmp Start
-exit
-MAIN ENDP
 ;###########################CalcAppend##################################
 CalcAppend PROC
 	movzx eax, Equation[edx]
@@ -263,5 +375,31 @@ Cont:
 	movzx eax, Equation[edx]
 RET
 CheckFreeVar ENDP	
-										  ;#
+
+
+
+
+call crlf
+RET
+Q1 ENDP
+
+
+;----------------------------------------------------------
+;----------------------------------------------------------
+Q2 PROC
+Call Panic
+call crlf
+		RET
+Q2 ENDP 
+
+;----------------------------------------------------------
+;----------------------------------------------------------
+
+Q3 PROC
+		
+Q3 ENDP
+
+;----------------------------------------------------------
+;----------------------------------------------------------
+
 END MAIN
