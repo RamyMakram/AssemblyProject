@@ -3,7 +3,7 @@ INCLUDE Irvine32FCIS.inc ;DO NOT CHANGE THIS LINE
 ;###################################################################################;#
 .data																				;#
 																					;#
-	prmpt byte "	Please enter question number 1, 2, 3, or enter 0 to exit:", 0		;#
+	prmpt byte "	Please enter question number 1, 2, 3, 4, or enter 0 to exit:", 0		;#
 	wrongChoice byte "Please enter a valid question number!", 0		                ;#
 	intro byte "							     Welcome to Drivative solver                      ",0              
 	instructions byte "	Before get started follow the following instructions :",0    
@@ -13,6 +13,7 @@ INCLUDE Irvine32FCIS.inc ;DO NOT CHANGE THIS LINE
 	Pynomial byte "					1- Pynomial Equation",0                           
 	trigo byte "					2- Trigyomitric Equation",0                               
 	fract byte "					3- Fractional Equation",0                
+	Bonus byte "					4- Bonus Equation",0                
 																					;#
 	tmpstr byte 5 dup(?), 0															;#
 ;###################################################################################;#
@@ -44,6 +45,7 @@ Tan byte "Sec^2(",0
 EQSize dword 0
 ESITemp dword 0
 ECXTemp dword 0
+EBPTemp dword 0
 ;#########################Q3 DATA##############################	
 EqDev byte 35 dup(-1)
 IsMakam dword 0
@@ -53,8 +55,14 @@ NString dword 0
 NBast dword 0
 NMakam dword 0
 													
-														
-														
+;#########################Q4 DATA##############################	
+NumOfTermsQ4 dword 1
+EquationQ4 byte 35 dup(-1)												
+StartOfEverEquation dword 35 dup(-1)				
+EndOfEverEquation dword 35 dup(-1)				
+EDITemp dword 0
+SizeOfEquationQ4 dword 0
+		
 .code													
 														
 ;#######################################################
@@ -87,6 +95,9 @@ MAIN PROC									  ;#
 		call crlf									  ;#
 		mov edx,offset fract						  ;#
 		call writestring							  ;#
+		call crlf
+		mov edx,offset Bonus						  ;#
+		call writestring							  ;#
 		call crlf									  ;#
 		call crlf									  ;#
 		call crlf
@@ -98,9 +109,12 @@ MAIN PROC									  ;#
 			mov Co[esi],-1
 			mov Power[esi],-1
 			mov Return[esi],-1
+			mov StartOfEverEquation[esi],-1
+			mov EndOfEverEquation[esi],-1
 			mov EqDev[edi],-1
 			mov makam[edi],-1
 			mov bast[edi],-1
+			mov EquationQ4[edi],-1
 			add esi,4
 			inc edi
 		loop loopp									  ;#
@@ -119,8 +133,9 @@ MAIN PROC									  ;#
 		mov ecx,35
 		mov edx,offset Equation
 		call readstring
-		call Q1		
-		JMP CONT								  ;#
+		call Q1	
+		call crlf	
+		JMP CONT								      ;#
 													  ;#
 		_Q2:										  ;#
 		CMP EAX, 2									  ;#
@@ -131,13 +146,22 @@ MAIN PROC									  ;#
 		JMP CONT									  ;#
 													  ;#
 		_Q3:										  ;#
-		CMP EAX, 3									  ;#	
+		CMP EAX, 3									  ;#
+		JNE _Q4 								      ;#
 		mov edx,offset EnterEq
 		call writestring							  ;#
 		CALL Q3										  ;#
 		JMP CONT									  ;#
-													  ;#
-													  ;#
+			
+		_Q4:
+		CMP EAX,4    							      ;#
+		JNE WRONG
+		mov edx,offset EnterEq
+		call writestring							  ;#
+		CALL Q4										  ;#
+		JMP CONT   
+
+					                     			  ;#
 		WRONG:										  ;#
 		MOV EDX, OFFSET wrongChoice					  ;#
 		CALL WRITESTRING							  ;#
@@ -734,6 +758,114 @@ EmptyArrays PROC
 		loop loopp	
 RET
 EmptyArrays ENDP
+
+
+
+;###################################################Bonus##################################
+
+Q4 PROC
+	
+mov ecx,35
+mov edx, offset EquationQ4
+call readstring
+mov NumOfTermsQ4,0
+mov SizeOfEquationQ4,eax
+mov ecx,eax
+mov edi,0
+mov esi,offset StartOfEverEquation
+mov ebp,offset EndOfEverEquation
+loop_1Q4:
+
+	mov al,EquationQ4[edi]
+	cmp al,'('
+	je IncrementNumOfTermsQ4
+	cmp al,')'
+	je AssignEndEquation
+	jmp SkipQ4
+AssignEndEquation:
+	mov [ebp],edi
+	add ebp,4
+	jmp SkipQ4
+
+IncrementNumOfTermsQ4:
+	inc NumOfTermsQ4
+	mov [esi],edi
+	add esi,4
+
+SkipQ4:
+	inc edi
+
+loop loop_1Q4
+;########################
+
+mov esi,0
+
+loop_2Q4:
+mov ecx,StartOfEverEquation[esi]
+mov ebp,offset EquationQ4
+cmp ecx,0
+je SkipFromFirstPrint
+
+loopQ4In_1:
+	mov al,[ebp]
+	call writechar
+	inc ebp
+loop loopQ4In_1
+;#########################
+SkipFromFirstPrint:
+mov ESITemp,esi
+call EmptyArrays
+mov esi,ESITemp
+mov eax,EndOfEverEquation[esi]
+sub eax,StartOfEverEquation[esi]
+sub eax,1
+mov ecx,eax
+mov edx,offset Equation
+mov NString,0
+mov al,'('
+call writechar
+inc ebp
+loopSendToQ1:
+mov al,[ebp]
+mov [edx],al
+inc NString
+inc ebp
+inc edx
+loop loopSendToQ1
+mov eax,NString
+mov ESITemp,esi
+mov EBPTemp,ebp
+call Q1
+mov al,')'
+call writechar
+mov esi,ESITemp
+mov ebp,EBPTemp
+inc ebp
+
+
+mov ecx,SizeOfEquationQ4
+sub ecx,EndOfEverEquation[esi]
+dec ecx
+cmp ecx,0
+je JumpStart
+loopQ4In_3:
+	mov al,[ebp]
+	call writechar
+	inc ebp
+loop loopQ4In_3
+mov al,'+'
+call writechar
+
+
+JumpStart:
+	dec NumOfTermsQ4
+	ADD esi,4
+	cmp NumOfTermsQ4,0
+	jne loop_2Q4 
+
+
+RET
+Q4 ENDP
 
 ;----------------------------------------------------------
 ;----------------------------------------------------------
