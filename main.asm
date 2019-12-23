@@ -22,10 +22,10 @@ INCLUDE Irvine32FCIS.inc ;DO NOT CHANGE THIS LINE
 																
 ;#########################Q1 DATA##############################	
 EnterEq byte "Enter Equation To Solve: ",0
-Equation byte 35 dup(-1)
-Co dword 35 dup(-1)
-Power dword 35 dup(-1)
-Return dword 35 dup(-1)
+Equation byte 70 dup(-1)
+Co dword 70 dup(-1)
+Power dword 70 dup(-1)
+Return dword 70 dup(-1)
 Val byte 0
 PowerFlag byte 0
 LenghtOfEnterd dword 0
@@ -33,40 +33,43 @@ temp dword 0
 ReadedX dword 0
 NumOfTerms dword 0
 offsetOfEq dword 0
-OutPut byte 35 dup(?),0
-																					
+OutPut byte 70 dup(?),0
+Sign dword 70 dup(-1)												
 ;#########################Q2 DATA##############################	
-
-TragEquation byte 35 dup(-1)
+TragEquation byte 70 dup(-1)
 SizeOFTrag dword 0
 Sin byte "Cos(",0
-Cos byte "-Sin(",0
+Cos byte "Sin(",0
 Tan byte "Sec^2(",0
+Q2Sign byte 70 dup(-1)
+Q2Co dword 70 dup(-1)
 EQSize dword 0
 ESITemp dword 0
 ECXTemp dword 0
 EBPTemp dword 0
+SignOffsetTemp dword 0
+CoFlagQ2 dword 0
+SquareFlagQ2 dword 0
+NTemsQ2 dword 0
 ;#########################Q3 DATA##############################	
-EqDev byte 35 dup(-1)
+EqDev byte 70 dup(-1)
 IsMakam dword 0
-bast byte 35 dup(-1)
-makam byte 35 dup(-1)
+bast byte 70 dup(-1)
+makam byte 70 dup(-1)
 NString dword 0
 NBast dword 0
-NMakam dword 0
-													
+NMakam dword 0												
 ;#########################Q4 DATA##############################	
 NumOfTermsQ4 dword 1
-EquationQ4 byte 35 dup(-1)												
-StartOfEverEquation dword 35 dup(-1)				
-EndOfEverEquation dword 35 dup(-1)				
+EquationQ4 byte 70 dup(-1)												
+StartOfEverEquation dword 70 dup(-1)				
+EndOfEverEquation dword 70 dup(-1)				
 EDITemp dword 0
 SizeOfEquationQ4 dword 0
-		
 .code													
 														
 ;#######################################################
-MAIN PROC									  ;#
+MAIN PROC                               			  ;#
 		mov edx,offset intro						  ;#
 		call writestring						      ;#
 		call crlf									  ;#
@@ -103,7 +106,7 @@ MAIN PROC									  ;#
 		call crlf
 	PROGLOOP:
 		mov esi,0
-		mov ecx,35
+		mov ecx,70
 		mov edi,0
 		loopp:
 			mov Co[esi],-1
@@ -111,7 +114,10 @@ MAIN PROC									  ;#
 			mov Return[esi],-1
 			mov StartOfEverEquation[esi],-1
 			mov EndOfEverEquation[esi],-1
+			mov Q2Co[esi],-1
+			mov Sign[esi],-1
 			mov EqDev[edi],-1
+			mov Q2Sign[edi],-1
 			mov makam[edi],-1
 			mov bast[edi],-1
 			mov EquationQ4[edi],-1
@@ -130,7 +136,7 @@ MAIN PROC									  ;#
 		JNE _Q2										  ;#
 		mov edx,offset EnterEq
 		call writestring
-		mov ecx,35
+		mov ecx,70
 		mov edx,offset Equation
 		call readstring
 		call Q1	
@@ -190,6 +196,7 @@ Q1 PROC
 	mov esi, offset Co
 	mov edi,offset Power
 	mov PowerFlag,0 ;flag of power
+	mov ebp,offset Sign
 	looop:
 
 		movzx eax, Equation[edx]   ; Get the current character
@@ -197,7 +204,7 @@ Q1 PROC
 		je skip
 		cmp eax,43 ; value is +
 		je skip
-		cmp eax,-1 ; value is +
+		cmp eax,-1 ; value is -1
 		je Out2
 		cmp ecx,LenghtOfEnterd
 		je Check_FirstX
@@ -230,7 +237,9 @@ Q1 PROC
 		je assignPower
 		jmp assignCof
 
-	skip:
+	skip:	
+		mov [ebp],eax
+		add ebp,4
 		cmp PowerFlag,1 ;check power flag
 		je assignPower
 		call CheckFreeVar
@@ -279,6 +288,7 @@ mov ecx,0
 	;###########################Print##################################
 	mov esi, offset Co
 	mov edi,offset Power
+	mov ebx,offset Sign
 	mov ecx,NumOfTerms
 	mov ebp,0
 	loop3:
@@ -291,21 +301,30 @@ mov ecx,0
 		mov eax,[esi]
 		cmp eax,0
 		je cont
-		call writedec
-		call AsignInReturn
+		mov edx,45
+		cmp [ebx],edx ;cmp mince
+		je PrintMince
+		add ebx,4
+		jmp Actions2
+
+	PrintMince:
+		mov al,'-'
+		call writechar
 		jmp Actions2
 
 	PrintSign:
 		mov eax,[esi]
 		cmp eax,0
 		je cont
-		call writeint
-		mov eax,43
-		call AsignInReturn
-		mov eax,[esi]
-		call AsignInReturn
+		mov al,[ebx]
+		call writechar
+		add ebx,4
 
 	Actions2:
+		mov eax,[esi]
+		cmp eax,0
+		je cont ;print only Co
+		call writedec
 		mov eax,[edi]
 		cmp eax,0
 		jle cont ;print only Co
@@ -317,18 +336,15 @@ mov ecx,0
 		mov al,'X'
 		call writechar
 		mov eax,88
-		call AsignInReturn
 		jmp cont
 
 	PrintAll:
 		mov al,'X'
 		call writechar
 		mov eax,88
-		call AsignInReturn
 		mov al,'^'
 		call writechar
 		mov eax,94
-		call AsignInReturn
 		mov eax,[edi]
 		call writedec
 
@@ -339,6 +355,8 @@ mov ecx,0
 		cmp ecx,0
 		jne loop3
 RET
+
+Q1 ENDP
 ;###########################CalcAppend##################################
 CalcAppend PROC
 	movzx eax, Equation[edx]
@@ -380,6 +398,9 @@ continue:
 AssignPowerProc ENDP
 
 CheckFirst_X PROC
+	mov eax,43
+	mov [ebp],eax
+	add ebp,4
 	movzx eax, Equation[edx]
 	CMP EAX,88 ;THERE X
 	JE FirstIsX
@@ -407,12 +428,6 @@ Cont:
 RET
 CheckFreeVar ENDP	
 
-AsignInReturn PROC
-	mov Return[ebp],eax
-	add ebp,4
-RET
-AsignInReturn ENDP
-
 PrepairToPrint PROC
 	mov edx, 0             ; dividend high half = 0.  prefer  xor edx,edx
 	mov ebx, 10            ; divisor can be any register or memory
@@ -422,114 +437,249 @@ PrepairToPrint PROC
 RET
 PrepairToPrint ENDP
 
-Q1 ENDP
 
 
 ;----------------------------------------------------------
 ;----------------------------------------------------------
 Q2 PROC
-mov ecx,35
+mov ecx,70
 mov edx,offset TragEquation
+mov ebp,offset Q2Co
+mov ebx,offset Q2Sign
 call readstring
 mov ecx,eax
 mov SizeOFTrag,eax
 mov esi,0
+mov NTemsQ2,0
 LoopQQQ1:
+		mov al,TragEquation[esi]
+		cmp ecx,SizeOFTrag
+		je Check_FirstSign
+		jmp S2
 
+Check_FirstSign:
+	inc NTemsQ2
+	cmp al,'-'
+	je FirstIsMince
+	jmp FirstIsPositive
+FirstIsMince:
+	mov al,'-'
+	mov [ebx],al
+	inc ebx
+	mov SignOffsetTemp,ebx
+	mov ebx,0
+	dec ecx
+	inc esi
+	jmp S2
+FirstIsPositive:
+	mov al,'+'
+	mov [ebx],al
+	inc ebx
+	mov SignOffsetTemp,ebx
+	mov ebx,0
+
+S2:
 mov al,TragEquation[esi]
-cmp al,83
+cmp al,83 ;S
 je Sin_Lable
-cmp al,67
+cmp al,67 ;C
 je Cos_Lable
-cmp al,84
+cmp al,84 ;T
 je Tan_Lable
 cmp al,')'
 je ContQ3_
 cmp al,'+'
-je ContQ3_
+je RemoveAllFlag
+cmp al,'-'
+je RemoveAllFlag
 cmp al,0
 je ContQ3_
+call CalcAppend2
+mov CoFlagQ2,1
+jmp ContQ3_
 
 Sin_Lable:
+	mov al,TragEquation[esi+3]
+	cmp al,'^'
+	je SinSq_Lable
 	add esi,4
 	sub ecx,4
 	mov ESITemp,esi
 	mov ECXTemp,ecx
 	call SinProc
+	mov EBPTemp,ebp
+	mov al,'('
+	call writechar
 	mov eax,EQSize
 	call Q1
+	mov al,')'
+	call writechar
+	mov ebp,EBPTemp
 	mov esi,ESITemp
 	mov ecx,ECXTemp
 	jmp ContQ3_
+
+SinSq_Lable:
+	add esi,6
+	sub ecx,6
+	mov ESITemp,esi
+	mov ECXTemp,ecx
+	call SinSquareProc
+	mov al,'('
+	call writechar
+	mov EBPTemp,ebp
+	mov eax,EQSize
+	call Q1
+	mov ebp,EBPTemp
+	mov al,')'
+	call writechar
+	mov esi,ESITemp
+	mov ecx,ECXTemp
+	jmp ContQ3_
+
 Cos_Lable:
+	mov al,TragEquation[esi+3]
+	cmp al,'^'
+	je CosSq_Lable
 	add esi,4
 	sub ecx,4
 	mov ESITemp,esi
 	mov ECXTemp,ecx
 	call CosProc
+	mov EBPTemp,ebp
+	mov al,'('
+	call writechar
 	mov eax,EQSize
 	call Q1
+	mov al,')'
+	call writechar
+	mov ebp,EBPTemp
 	mov esi,ESITemp
 	mov ecx,ECXTemp
 	jmp ContQ3_
+
+CosSq_Lable:
+	add esi,6
+	sub ecx,6
+	mov ESITemp,esi
+	mov ECXTemp,ecx
+	call CosSquareProc
+	mov al,'('
+	call writechar
+	mov EBPTemp,ebp
+	mov eax,EQSize
+	call Q1
+	mov ebp,EBPTemp
+	mov al,')'
+	call writechar
+	mov esi,ESITemp
+	mov ecx,ECXTemp
+	jmp ContQ3_
+
 Tan_Lable:
 	add esi,4
 	sub ecx,4
 	mov ESITemp,esi
 	mov ECXTemp,ecx
 	call TanProc
+	mov EBPTemp,ebp
+	mov al,'('
+	call writechar
 	mov eax,EQSize
 	call Q1
+	mov al,')'
+	call writechar
+	mov ebp,EBPTemp
 	mov esi,ESITemp
 	mov ecx,ECXTemp
 	jmp ContQ3_
+
+RemoveAllFlag:
+	inc NTemsQ2
+	mov ebx,SignOffsetTemp
+	mov [ebx],al
+	inc ebx
+	mov SignOffsetTemp,ebx
+	mov SquareFlagQ2,0
+	mov SquareFlagQ2,0
+	mov ebx,0
 
 ContQ3_:
 	add eax,0
 	inc esi
 	dec ecx
 	cmp ecx,0
-	jne LoopQQQ1 
-
-
-
-
-
+	jne LoopQQQ1
 call crlf
 		RET
 
+
+Q2 ENDP 
+
+;#########################
+CalcAppend2 PROC
+	movzx eax,TragEquation[esi]
+    sub eax, 48             ; Convert from ASCII to decimal 
+    imul ebx, 10            ; Multiply total by 10
+    add ebx, eax            ; Add current digit to total
+		RET
+CalcAppend2 ENDP
 ;########################################################################
 SinProc PROC
-mov eax,SizeOFTrag
-sub eax,4
-cmp ecx,eax
-jne PrintSignTrag1
-jmp Outq1
 
-PrintSignTrag1:
-	mov al,'+'
+cmp CoFlagQ2,1
+je assignCo
+CofIsOne:
+	mov eax,1
+	mov [ebp],eax
+	mov ebx,0
+	jmp Continue
+
+assignCo:
+	mov [ebp],ebx
+	mov ebx,0
+
+Continue:
+	mov ebx,SignOffsetTemp
+	mov al,[ebx-1]
+	cmp al,'+'
+	jne PrintMince
+	cmp NTemsQ2,1
+	je PrintCo
 	call writechar
+	jmp PrintCo
+
+PrintMince:
+	cmp al,'-'
+	call writechar
+
+PrintCo:
+	mov eax,[ebp]
+	cmp eax,1
+	jle Outq1
+	call writedec
+	add ebp,4
 
 Outq1:
-mov EQSize,0
-mov edx,offset Sin
-call writestring
-mov ESITemp,esi
-call EmptyArrays
-mov esi,ESITemp
-mov edi,offset Equation
-mov ecx,ECXTemp
-lopp1:
-	mov al,TragEquation[esi]
-	cmp al,')'
-	je CaallQ1_1
-	call writechar
-	mov [edi],al
-	inc EQSize
-	inc esi
-	inc edi
-	dec ECXTemp
-loop lopp1
+	mov EQSize,0
+	mov edx,offset Sin
+	call writestring
+	mov ESITemp,esi
+	call EmptyArrays
+	mov esi,ESITemp
+	mov edi,offset Equation
+	mov ecx,ECXTemp
+	lopp1:
+		mov al,TragEquation[esi]
+		cmp al,')'
+		je CaallQ1_1
+		call writechar
+		mov [edi],al
+		inc EQSize
+		inc esi
+		inc edi
+		dec ECXTemp
+	loop lopp1
 
 CaallQ1_1:
 	mov al,')'
@@ -541,28 +691,124 @@ CaallQ1_1:
 	mov ECXTemp,ecx
 RET
 SinProc ENDP
+;##########################################################
+
+SinSquareProc PROC
+cmp CoFlagQ2,1
+je assignCo
+CofIsOne:
+	mov eax,1
+	mov [ebp],eax
+	jmp Continue
+
+assignCo:
+	mov [ebp],ebx
+	cmp ecx,0
+	mov CoFlagQ2,1
+
+Continue:
+	call PrintSignSinTragProc
+	mov eax,[ebp]
+	cmp eax,1
+	jle Outq1
+	call writedec
+	add ebp,4
+
+Outq1:
+	mov EQSize,0
+	mov edx,offset Cos
+	call writestring
+	mov ESITemp,esi
+	call EmptyArrays
+	mov esi,ESITemp
+	mov edi,offset Equation
+	mov ecx,ECXTemp
+	mov al,'2'
+	call writechar
+	mov al,'('
+	call writechar
+	lopp1:
+		mov al,TragEquation[esi]
+		cmp al,')'
+		je CaallQ1_1
+		call writechar
+		mov [edi],al
+		inc EQSize
+		inc esi
+		inc edi
+		dec ECXTemp
+	loop lopp1
+
+CaallQ1_1:
+	mov al,')'
+	call writechar
+	mov al,')'
+	call writechar
+	mov al,'*'
+	call writechar
+	mov eax,EQSize
+	mov ESITemp,esi
+	mov ECXTemp,ecx
+RET
+SinSquareProc ENDP
 
 ;#######################################################################
 CosProc PROC
-mov EQSize,0
-mov edx,offset Cos
-call writestring
-mov ESITemp,esi
-call EmptyArrays
-mov esi,ESITemp
-mov edi,offset Equation
-mov ecx,ECXTemp
-lopp2:
-	mov al,TragEquation[esi]
-	cmp al,')'
-	je CaallQ1_2
+cmp CoFlagQ2,1
+je assignCo
+CofIsOne:
+	mov eax,1
+	mov [ebp],eax
+	mov ebx,0
+	jmp Continue
+
+assignCo:
+	mov [ebp],ebx
+	mov ebx,0
+
+Continue:
+	mov ebx,SignOffsetTemp
+	mov al,[ebx-1]
+	cmp al,'-'
+	jne PrintMince
+	cmp NTemsQ2,1
+	je PrintCo
+	mov al,'+'
 	call writechar
-	mov [edi],al
-	inc EQSize
-	inc esi
-	inc edi
-	dec ECXTemp
-loop lopp2
+	jmp PrintCo
+
+PrintMince:
+	mov al,'-'
+	call writechar
+
+PrintCo:
+	mov eax,[ebp]
+	cmp eax,1
+	jle Outq1
+	call writedec
+	add ebp,4
+
+Outq1:
+	mov EQSize,0
+	mov edx,offset Cos
+	call writestring
+	mov ESITemp,esi
+	call EmptyArrays
+	mov esi,ESITemp
+	mov edi,offset Equation
+	mov ecx,ECXTemp
+	mov eax,offset TragEquation ;;;;;;;;;;;;;;ForTestOnly
+	lopp2:
+		mov al,TragEquation[esi]
+		cmp al,')'
+		je CaallQ1_2
+		call writechar
+		mov [edi],al
+		inc EQSize
+		inc esi
+		inc edi
+		dec ECXTemp
+	loop lopp2
 
 CaallQ1_2:
 	mov al,')'
@@ -574,38 +820,136 @@ CaallQ1_2:
 	mov ECXTemp,ecx
 RET
 CosProc ENDP
-;################################################################################3
-TanProc PROC
-mov eax,SizeOFTrag
-sub eax,4
-cmp ecx,eax
-jne PrintSignTrag3
-jmp Outq
+;#################################################
 
-PrintSignTrag3:
+CosSquareProc PROC
+cmp CoFlagQ2,1
+je assignCo
+CofIsOne:
+	mov eax,1
+	mov [ebp],eax
+	mov ebx,0
+	jmp Continue
+
+assignCo:
+	mov [ebp],ebx
+	mov ebx,0
+
+Continue:
+	mov ebx,SignOffsetTemp
+	mov al,[ebx-1]
+	cmp al,'-'
+	je PrintMince
+	cmp NTemsQ2,1
+	je PrintCo
 	mov al,'+'
 	call writechar
+	jmp PrintCo
 
-Outq:
-mov EQSize,0
-mov edx,offset Tan
-call writestring
-mov ESITemp,esi
-call EmptyArrays
-mov esi,ESITemp
-mov edi,offset Equation
-mov ecx,ECXTemp
-lopp3:
-	mov al,TragEquation[esi]
-	cmp al,')'
-	je CaallQ1_3
+PrintMince:
+	mov al,'-'
 	call writechar
-	mov [edi],al
-	inc EQSize
-	inc esi
-	inc edi
-	dec ECXTemp
-loop lopp3
+
+PrintCo:
+	mov eax,[ebp]
+	cmp eax,1
+	jle Outq1
+	call writedec
+	add ebp,4
+
+Outq1:
+	mov EQSize,0
+	mov edx,offset Cos
+	call writestring
+	mov ESITemp,esi
+	call EmptyArrays
+	mov esi,ESITemp
+	mov edi,offset Equation
+	mov ecx,ECXTemp
+	mov al,'2'
+	call writechar
+	mov al,'('
+	call writechar
+	lopp1:
+		mov al,TragEquation[esi]
+		cmp al,')'
+		je CaallQ1_1
+		call writechar
+		mov [edi],al
+		inc EQSize
+		inc esi
+		inc edi
+		dec ECXTemp
+	loop lopp1
+
+CaallQ1_1:
+	mov al,')'
+	call writechar
+	mov al,')'
+	call writechar
+	mov al,'*'
+	call writechar
+	mov eax,EQSize
+	mov ESITemp,esi
+	mov ECXTemp,ecx
+RET
+CosSquareProc ENDP
+;################################################################################3
+TanProc PROC
+cmp CoFlagQ2,1
+je assignCo
+CofIsOne:
+	mov eax,1
+	mov [ebp],eax
+	mov ebx,0
+	jmp Continue
+
+assignCo:
+	mov [ebp],ebx
+	mov ebx,0
+
+Continue:
+	mov ebx,SignOffsetTemp
+	mov al,[ebx-1]
+	cmp al,'-'
+	je PrintMince
+	cmp NTemsQ2,1
+	je PrintCo
+	mov al,'+'
+	call writechar
+	jmp PrintCo
+
+PrintMince:
+	mov al,'-'
+	call writechar
+
+PrintCo:
+	mov eax,[ebp]
+	cmp eax,1
+	jle Outq1
+	call writedec
+	add ebp,4
+
+Outq1:
+	mov EQSize,0
+	mov edx,offset Tan
+	call writestring
+	mov ESITemp,esi
+	call EmptyArrays
+	mov esi,ESITemp
+	mov edi,offset Equation
+	mov ecx,ECXTemp
+	lopp3:
+		mov al,TragEquation[esi]
+		cmp al,')'
+		je CaallQ1_3
+		call writechar
+		mov [edi],al
+		inc EQSize
+		inc esi
+		inc edi
+		dec ECXTemp
+	loop lopp3
 
 CaallQ1_3:
 	mov al,')'
@@ -618,13 +962,51 @@ CaallQ1_3:
 RET
 TanProc ENDP
 
+PrintSignSinTragProc PROC
+	mov ebx,SignOffsetTemp
+	mov al,[ebx-1]
+	cmp al,'-'
+	je PrintMince
+	cmp NTemsQ2,1
+	je Skip
+	mov al,'+'
+	call writechar
+	jmp Skip
 
-Q2 ENDP 
+PrintMince:
+	mov al,'-'
+	call writechar
+
+Skip:
+	add ebx,0
+RET
+PrintSignSinTragProc ENDP
+;#######################################
+PrintSignCosTragProc PROC
+	mov ebx,SignOffsetTemp
+	mov al,[ebx-1]
+	cmp al,'+'
+	je PrintMince
+	cmp NTemsQ2,1
+	je Skip
+	mov al,'+'
+	call writechar
+	jmp Skip
+
+PrintMince:
+	mov al,'-'
+	call writechar
+
+Skip:
+	add ebx,0
+RET
+PrintSignCosTragProc ENDP
+
 ;----------------------------------------------------------
 ;----------------------------------------------------------
 
 Q3 PROC
-mov ecx,35
+mov ecx,70
 mov edx, offset EqDev
 call readstring
 mov ecx, eax 
@@ -747,12 +1129,11 @@ Q3 ENDP
 EmptyArrays PROC
 		mov esi,0
 		mov edi,0
-		mov ecx,35
+		mov ecx,70
 		loopp:
 			mov Co[esi],-1
 			mov Equation[edi],-1
 			mov Power[esi],-1
-			mov Return[esi],-1
 			add esi,4
 			inc edi
 		loop loopp	
@@ -765,7 +1146,7 @@ EmptyArrays ENDP
 
 Q4 PROC
 	
-mov ecx,35
+mov ecx,70
 mov edx, offset EquationQ4
 call readstring
 mov NumOfTermsQ4,0
@@ -869,5 +1250,4 @@ Q4 ENDP
 
 ;----------------------------------------------------------
 ;----------------------------------------------------------
-
 END MAIN
